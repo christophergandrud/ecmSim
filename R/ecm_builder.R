@@ -22,13 +22,15 @@
 #' @param Sigma an optional positive-definite symmetric matrix estimated
 #' from an ECM model. The matrix specifies the covariance matrix of the
 #' variables. If \code{obj}  is supplied then \code{Sigma} is ignored.
+#' Note that if the model includes an intercept the corresponding column in
+#' \code{Sigma} must be called \code{intercept_}.
 #'
 #' @importFrom coreSim b_sim qi_builder
 #' @export
 
 ecm_builder <- function(obj, baseline_df, lag_dv,
                         lag_iv, d_iv, iv_shock, t_extent = 5,
-                        nsim = 1000,
+                        nsim = 1000, ci = 0.95,
                         mu, Sigma)
 {
     if (t_extent < 3) {
@@ -37,23 +39,30 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     }
 
     if (missing(lag_dv)) {
-        message('lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable.\n')
         lag_dv <- names(baseline_df)[1]
+        message(paste(
+            'lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable:\n',
+            lag_dv))
     }
 
+    non_lag_dv_names <- names(baseline_df)[!(names(baseline_df) %in% lag_dv)]
+    non_lag_dv_names_shocked <- c(non_lag_dv_names, d_iv)
+
+
     # Baseline cenario
-    baseline_scenario <- df_repeat(baseline_df, n = t_extent)
+    baseline_scenario <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     baseline_scenario$time__ <- 1:t_extent
-    return(baseline_scenario)
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
+    shocked$shocked_df <- FALSE
 
     # Create shock fitted values
-    shocked <- df_repeat(baseline_df, n = t_extent)
+    shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     shocked$time__ <- 1:t_extent
     shocked[2, d_iv] <- iv_shock
     shocked[is.na(shocked)] <- 0
     shocked[3:t_extent, lag_iv] <- shocked[1, lag_iv] + iv_shock
     shocked[2:t_extent, lag_dv] <- NA
+    shocked$shocked_df <- TRUE
 
     scenarios <- list(baseline = baseline_scenario,
                       shocked = shocked)
@@ -64,22 +73,43 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     else if (!missing(mu) & !missing(Sigma))
         param_sims <- b_sim(mu = mu, Sigma = Sigma, nsim = nsim)
 
-
-    sims <- data.frame()
+    sims <- list()
     sims <- lapply(seq_along(scenarios), function(x) {
         temp_scen <- scenarios[[x]]
+        if (any(temp_scen$shocked_df)) col_names = non_lag_dv_names_shocked
+        else col_names = non_lag_dv_names
+        temp_scen <- drop_col(temp_scen, 'shocked_df')
 
         temp_sims <- data.frame()
         for (u in 1:nrow(temp_scen)) {
+            one_scen <- temp_scen[u, ]
+            one_scen <- one_scen[, !(names(temp_scen) %in% 'time__')]
             if (u == 1) {
-                one_scen <- temp_scen[u, ]
-                one_scen <- one_scen[, !(names(temp_scen %in% 'time__'))]
-                one_scen_sims <- qi_builder(b_sims = param_sims,
-                                            newdata = one_scen)
+                one_scen_sims <- coreSim::qi_builder(b_sims = param_sims,
+                                            newdata = one_scen,
+                                            ci = 1)
+                one_scen_sims[, lag_dv] <- one_scen_sims[, lag_dv] +
+                                            one_scen_sims[, 'qi_']
+                one_scen_sims <- drop_col(one_scen_sims, 'qi_')
+                one_scen_sims$time__ <- u
                 temp_sims <- rbind(temp_sims, one_scen_sims)
             }
-            temp_sims
+            else if (u > 1) {
+                lag_dv_sim_values <- subset(temp_sims, time__ == u - 1)
+                lag_dv_sim_values <- data.frame(lag_dv_sim_values[, lag_dv])
+                names(lag_dv_sim_values) <- lag_dv
+                temp_scen_updated <- expand_dfs(lag_dv_sim_values,
+                                        one_scen[, col_names])
+                one_scen_sims <- param_sims[, names(temp_scen_updated)] *
+                    temp_scen_updated
+                temp_scen_updated[, lag_dv] <- temp_scen_updated[, lag_dv] +
+                                    (rowSums(one_scen_sims) +
+                                    param_sims[, 'intercept_'])
+                temp_scen_updated$time__ <- u
+                temp_sims <- rbind(temp_sims, temp_scen_updated)
+            }
         }
+        temp_sims
     })
 
     return(sims)

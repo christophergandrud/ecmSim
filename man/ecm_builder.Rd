@@ -5,7 +5,7 @@
 \title{Create simulations for long-term effects from error correction models (ECM)}
 \usage{
 ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, t_extent = 5,
-  nsim = 1000, mu, Sigma)
+  nsim = 1000, ci = 0.95, mu, Sigma)
 }
 \arguments{
 \item{obj}{a fitted model object for an ECM model}
@@ -36,7 +36,9 @@ from an ECM model. If \code{obj} is supplied then \code{mu} is ignored.}
 
 \item{Sigma}{an optional positive-definite symmetric matrix estimated
 from an ECM model. The matrix specifies the covariance matrix of the
-variables. If \code{obj}  is supplied then \code{Sigma} is ignored.}
+variables. If \code{obj}  is supplied then \code{Sigma} is ignored.
+Note that if the model includes an intercept the corresponding column in
+\code{Sigma} must be called \code{intercept_}.}
 
 \item{nsims}{numeric. Number of simulations to draw.}
 }
