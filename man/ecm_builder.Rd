@@ -29,6 +29,17 @@ one period shock to \code{lag_dv}.}
 
 \item{iv_shock}{numeric shock to \code{iv}.}
 
+\item{lag_iv_2}{character string identifying variable name of the second
+lagged independent variable in an interaction with \code{lag_iv}, if
+applicable.}
+
+\item{d_iv_2}{character string identifying variable name of the second
+shocked independent variable in an interaction with \code{lag_iv}, if
+applicable.}
+
+\item{iv_2_shock}{numeric shock to \code{iv_2}. If not specified, set to
+0.}
+
 \item{t_extent}{numeric specifying the time points from the shock to
 simulate the long-term effects of the shock for. The default is 5 time
 points.}

@@ -14,6 +14,14 @@
 #' \code{lag_dv} between the current and previous time, i.e. the size of the
 #' one period shock to \code{lag_dv}.
 #' @param iv_shock numeric shock to \code{iv}.
+#' @param lag_iv_2 character string identifying variable name of the second
+#' lagged independent variable in an interaction with \code{lag_iv}, if
+#' applicable.
+#' @param d_iv_2 character string identifying variable name of the second
+#' shocked independent variable in an interaction with \code{lag_iv}, if
+#' applicable.
+#' @param iv_2_shock numeric shock to \code{iv_2}. If not specified, set to
+#' 0.
 #' @param t_extent numeric specifying the time points from the shock to
 #' simulate the long-term effects of the shock for. The default is 5 time
 #' points.
