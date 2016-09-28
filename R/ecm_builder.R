@@ -16,7 +16,14 @@
 #' @param t_extent numeric specifying the time points from the shock to
 #' simulate the long-term effects of the shock for. The default is 5 time
 #' points.
-#' @param nsims numeric. Number of simulations to draw.
+#' @param nsim numeric. Number of simulations to draw.
+#' @param ci the proportion of the central interval of the simulations to
+#' return. Must be in (0, 1] or equivalently (0, 100]. Note: if \code{ci = 1}
+#' then the full interval (i.e. 100 percent) is assumed.
+#' @param slim logical indicating whether to (if \code{FALSE}) return all
+#' simulations in the central interval specified by \code{ci} for each fitted
+#' scenario or (if \code{TRUE}) just the minimum, median, and maxium values.
+#' See \code{\link{qi_slimmer}} for more details.
 #' @param mu an optional vector giving the means of the variables estimated
 #' from an ECM model. If \code{obj} is supplied then \code{mu} is ignored.
 #' @param Sigma an optional positive-definite symmetric matrix estimated
@@ -25,12 +32,12 @@
 #' Note that if the model includes an intercept the corresponding column in
 #' \code{Sigma} must be called \code{intercept_}.
 #'
-#' @importFrom coreSim b_sim qi_builder
+#' @importFrom coreSim b_sim qi_builder qi_slimmer
 #' @export
 
 ecm_builder <- function(obj, baseline_df, lag_dv,
                         lag_iv, d_iv, iv_shock, t_extent = 5,
-                        nsim = 1000, ci = 0.95,
+                        nsim = 1000, ci = 0.95, slim = TRUE,
                         mu, Sigma)
 {
 
@@ -44,7 +51,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     if (missing(lag_dv)) {
         lag_dv <- names(baseline_df)[1]
         message(paste(
-            'lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable:\n     ',
+            'lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable:\n\n     ',
             lag_dv))
     }
 
@@ -56,7 +63,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     baseline_scenario <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     baseline_scenario$time__ <- 1:t_extent
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
-    baseline_scenario$shocked_df <- FALSE
+    baseline_scenario$is_shocked <- FALSE
 
     # Create shock fitted values
     shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
@@ -65,7 +72,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     shocked[is.na(shocked)] <- 0
     shocked[3:t_extent, lag_iv] <- shocked[1, lag_iv] + iv_shock
     shocked[2:t_extent, lag_dv] <- NA
-    shocked$shocked_df <- TRUE
+    shocked$is_shocked <- TRUE
 
     scenarios <- list(baseline = baseline_scenario,
                       shocked = shocked)
@@ -79,11 +86,11 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     sims <- list()
     sims <- lapply(seq_along(scenarios), function(x) {
         temp_scen <- scenarios[[x]]
-        is_shocked <- any(temp_scen$shocked_df)
+        is_shocked <- any(temp_scen$is_shocked)
         if (is_shocked) col_names = non_lag_dv_names_shocked
         else col_names = non_lag_dv_names
 
-        temp_scen <- drop_col(temp_scen, 'shocked_df')
+        temp_scen <- drop_col(temp_scen, 'is_shocked')
 
         temp_sims <- data.frame()
         for (u in 1:nrow(temp_scen)) {
@@ -123,6 +130,10 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     sims$scenario_ <- interaction(sims[, c('time__', 'is_shocked')])
     sims <- qi_central_interval(sims, scenario_var = 'is_shocked',
                                 qi_var = lag_dv, ci = ci)
+    if (slim) {
+        sims <- qi_slimmer(sims, qi_var = lag_dv)
+        sims$is_shocked <- c(baseline_scenario$is_shocked, shocked$is_shocked)
+    }
     sims <- drop_col(sims, 'scenario_')
 
     return(sims)

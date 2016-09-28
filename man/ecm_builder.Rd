@@ -5,7 +5,7 @@
 \title{Create simulations for long-term effects from error correction models (ECM)}
 \usage{
 ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, t_extent = 5,
-  nsim = 1000, ci = 0.95, mu, Sigma)
+  nsim = 1000, ci = 0.95, slim = TRUE, mu, Sigma)
 }
 \arguments{
 \item{obj}{a fitted model object for an ECM model}
@@ -31,6 +31,17 @@ one period shock to \code{lag_dv}.}
 simulate the long-term effects of the shock for. The default is 5 time
 points.}
 
+\item{nsim}{numeric. Number of simulations to draw.}
+
+\item{ci}{the proportion of the central interval of the simulations to
+return. Must be in (0, 1] or equivalently (0, 100]. Note: if \code{ci = 1}
+then the full interval (i.e. 100 percent) is assumed.}
+
+\item{slim}{logical indicating whether to (if \code{FALSE}) return all
+simulations in the central interval specified by \code{ci} for each fitted
+scenario or (if \code{TRUE}) just the minimum, median, and maxium values.
+See \code{\link{qi_slimmer}} for more details.}
+
 \item{mu}{an optional vector giving the means of the variables estimated
 from an ECM model. If \code{obj} is supplied then \code{mu} is ignored.}
 
@@ -39,8 +50,6 @@ from an ECM model. The matrix specifies the covariance matrix of the
 variables. If \code{obj}  is supplied then \code{Sigma} is ignored.
 Note that if the model includes an intercept the corresponding column in
 \code{Sigma} must be called \code{intercept_}.}
-
-\item{nsims}{numeric. Number of simulations to draw.}
 }
 \description{
 Create simulations for long-term effects from error correction models (ECM)
