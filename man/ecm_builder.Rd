@@ -8,7 +8,8 @@ ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, t_extent = 5,
   nsim = 1000, ci = 0.95, slim = TRUE, mu, Sigma)
 }
 \arguments{
-\item{obj}{a fitted model object for an ECM model}
+\item{obj}{a fitted model object from an ECM model estimated with
+\code{\link{lm}}.}
 
 \item{baseline_df}{a data frame with fitted values for the baseline scenario
 before the shock to \code{lag_dv}. Note column names should match coefficient

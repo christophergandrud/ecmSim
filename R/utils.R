@@ -10,6 +10,8 @@ df_repeat <- function(x, n) {
 #' @noRd
 
 expand_dfs <- function(x, y) {
+    fake___ <- NULL
+
     x$fake___ <- 1
     y$fake___ <- 1
     combined <- full_join(x, y, by = 'fake___')
@@ -46,13 +48,14 @@ ci_check <- function(x) {
 #' simulated quantity of interest values.
 #' @param ci numeric value indicating the central interval. Must be in (0, 1].
 #'
+#' @importFrom stats quantile
 #' @importFrom dplyr bind_rows
 #' @noRd
 
 qi_central_interval <- function(sims_scenarios, scenario_var = 'scenario_',
                                 qi_var = 'qi_', ci = 0.95)
 {
-    qi_ <- NULL
+    qi_ <- fake___ <- time__ <- NULL
     lower <- (1 - ci)/2
     upper <- 1 - lower
 

@@ -1,6 +1,7 @@
 #' Create simulations for long-term effects from error correction models (ECM)
 #'
-#' @param obj a fitted model object for an ECM model
+#' @param obj a fitted model object from an ECM model estimated with
+#' \code{\link{lm}}.
 #' @param baseline_df a data frame with fitted values for the baseline scenario
 #' before the shock to \code{lag_dv}. Note column names should match coefficient
 #' names in \code{obj}. Variables not include are assumed to be 0.
@@ -40,6 +41,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                         nsim = 1000, ci = 0.95, slim = TRUE,
                         mu, Sigma)
 {
+    time__ <- NULL
 
     ci <- ci_check(ci)
 
@@ -60,13 +62,13 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
 
 
     # Baseline cenario
-    baseline_scenario <- ecmSim:::df_repeat(baseline_df, n = t_extent)
+    baseline_scenario <- df_repeat(baseline_df, n = t_extent)
     baseline_scenario$time__ <- 1:t_extent
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
     baseline_scenario$is_shocked <- FALSE
 
     # Create shock fitted values
-    shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
+    shocked <- df_repeat(baseline_df, n = t_extent)
     shocked$time__ <- 1:t_extent
     shocked[2, d_iv] <- iv_shock
     shocked[is.na(shocked)] <- 0
@@ -97,7 +99,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
             one_scen <- temp_scen[u, ]
             one_scen <- one_scen[, !(names(temp_scen) %in% 'time__')]
             if (u == 1) {
-                one_scen_sims <- coreSim::qi_builder(b_sims = param_sims,
+                one_scen_sims <- qi_builder(b_sims = param_sims,
                                             newdata = one_scen,
                                             ci = 1, verbose = FALSE)
                 one_scen_sims[, lag_dv] <- one_scen_sims[, lag_dv] +
