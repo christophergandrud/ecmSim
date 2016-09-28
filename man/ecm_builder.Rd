@@ -4,7 +4,8 @@
 \alias{ecm_builder}
 \title{Create simulations for long-term effects from error correction models (ECM)}
 \usage{
-ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, t_extent = 5,
+ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, lag_iv_2, d_iv_2,
+  iv_2_shock, lag_iv_interaction_term, d_iv_interaction_term, t_extent = 5,
   nsim = 1000, ci = 0.95, slim = TRUE, mu, Sigma)
 }
 \arguments{
