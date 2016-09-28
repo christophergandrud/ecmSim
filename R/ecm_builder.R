@@ -20,6 +20,10 @@
 #' @param d_iv_2 character string identifying variable name of the second
 #' shocked independent variable in an interaction with \code{lag_iv}, if
 #' applicable.
+#' @param lag_iv_interaction_term character string identifying the interaction
+#' term for \code{lag_iv} * \code{lag_iv_2}, if applicable.
+#' @param d_iv_interaction_term character string identifying the interaction
+#' term for \code{d_iv} * \code{d_iv_2}, if applicable.
 #' @param iv_2_shock numeric shock to \code{iv_2}. If not specified, set to
 #' 0.
 #' @param t_extent numeric specifying the time points from the shock to
@@ -47,8 +51,8 @@
 ecm_builder <- function(obj, baseline_df, lag_dv,
                         lag_iv, d_iv, iv_shock,
                         lag_iv_2, d_iv_2,
-                        iv_2_shock,
                         lag_iv_interaction_term, d_iv_interaction_term,
+                        iv_2_shock,
                         t_extent = 5,
                         nsim = 1000, ci = 0.95, slim = TRUE,
                         mu, Sigma)
@@ -70,7 +74,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     }
 
     # Baseline scenario
-    baseline_scenario <- ecmSim:::df_repeat(baseline_df, n = t_extent)
+    baseline_scenario <- df_repeat(baseline_df, n = t_extent)
     baseline_scenario$time__ <- 1:t_extent
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
 
@@ -84,7 +88,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     baseline_scenario$is_shocked <- FALSE
 
     # Create shock fitted values
-    shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
+    shocked <- df_repeat(baseline_df, n = t_extent)
     shocked$time__ <- 1:t_extent
     shocked[2, d_iv] <- iv_shock
     shocked[is.na(shocked)] <- 0
