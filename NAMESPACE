@@ -3,5 +3,6 @@
 export(ecm_builder)
 importFrom(coreSim,b_sim)
 importFrom(coreSim,qi_builder)
+importFrom(dplyr,bind_rows)
 importFrom(dplyr,full_join)
 importFrom(dplyr,select)
