@@ -43,7 +43,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
 {
     time__ <- NULL
 
-    ci <- ci_check(ci)
+    ci <- ecmSim:::ci_check(ci)
 
     if (t_extent < 3) {
         message('t_extent must be 3 or more time points.\nForcing t_extent = 3.')
@@ -60,15 +60,14 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     non_lag_dv_names <- names(baseline_df)[!(names(baseline_df) %in% lag_dv)]
     non_lag_dv_names_shocked <- c(non_lag_dv_names, d_iv)
 
-
     # Baseline cenario
-    baseline_scenario <- df_repeat(baseline_df, n = t_extent)
+    baseline_scenario <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     baseline_scenario$time__ <- 1:t_extent
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
     baseline_scenario$is_shocked <- FALSE
 
     # Create shock fitted values
-    shocked <- df_repeat(baseline_df, n = t_extent)
+    shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     shocked$time__ <- 1:t_extent
     shocked[2, d_iv] <- iv_shock
     shocked[is.na(shocked)] <- 0
@@ -92,7 +91,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
         if (is_shocked) col_names = non_lag_dv_names_shocked
         else col_names = non_lag_dv_names
 
-        temp_scen <- drop_col(temp_scen, 'is_shocked')
+        temp_scen <- ecmSim:::drop_col(temp_scen, 'is_shocked')
 
         temp_sims <- data.frame()
         for (u in 1:nrow(temp_scen)) {
@@ -104,7 +103,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                                             ci = 1, verbose = FALSE)
                 one_scen_sims[, lag_dv] <- one_scen_sims[, lag_dv] +
                                             one_scen_sims[, 'qi_']
-                one_scen_sims <- drop_col(one_scen_sims, 'qi_')
+                one_scen_sims <- ecmSim:::drop_col(one_scen_sims, 'qi_')
                 one_scen_sims$time__ <- u
                 temp_sims <- rbind(temp_sims, one_scen_sims)
             }
@@ -112,8 +111,10 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                 lag_dv_sim_values <- subset(temp_sims, time__ == u - 1)
                 lag_dv_sim_values <- data.frame(lag_dv_sim_values[, lag_dv])
                 names(lag_dv_sim_values) <- lag_dv
-                temp_scen_updated <- expand_dfs(lag_dv_sim_values,
-                                        one_scen[, col_names])
+                one_scen_x <- data.frame(one_scen[, col_names])
+                colnames(one_scen_x) <- col_names
+                temp_scen_updated <- ecmSim:::expand_dfs(lag_dv_sim_values,
+                                                         one_scen_x)
                 one_scen_sims <- param_sims[, names(temp_scen_updated)] *
                     temp_scen_updated
                 temp_scen_updated[, lag_dv] <- temp_scen_updated[, lag_dv] +
