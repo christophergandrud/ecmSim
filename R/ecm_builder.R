@@ -14,6 +14,18 @@
 #' \code{lag_dv} between the current and previous time, i.e. the size of the
 #' one period shock to \code{lag_dv}.
 #' @param iv_shock numeric shock to \code{iv}.
+#' @param lag_iv_2 character string identifying variable name of the second
+#' lagged independent variable in an interaction with \code{lag_iv}, if
+#' applicable.
+#' @param d_iv_2 character string identifying variable name of the second
+#' shocked independent variable in an interaction with \code{lag_iv}, if
+#' applicable.
+#' @param lag_iv_interaction_term character string identifying the interaction
+#' term for \code{lag_iv} * \code{lag_iv_2}, if applicable.
+#' @param d_iv_interaction_term character string identifying the interaction
+#' term for \code{d_iv} * \code{d_iv_2}, if applicable.
+#' @param iv_2_shock numeric shock to \code{iv_2}. If not specified, set to
+#' 0.
 #' @param t_extent numeric specifying the time points from the shock to
 #' simulate the long-term effects of the shock for. The default is 5 time
 #' points.
@@ -80,7 +92,11 @@
 #' @export
 
 ecm_builder <- function(obj, baseline_df, lag_dv,
-                        lag_iv, d_iv, iv_shock, t_extent = 5,
+                        lag_iv, d_iv, iv_shock,
+                        lag_iv_2, d_iv_2,
+                        lag_iv_interaction_term, d_iv_interaction_term,
+                        iv_2_shock,
+                        t_extent = 5,
                         nsim = 1000, ci = 0.95, slim = TRUE,
                         mu, Sigma)
 {
@@ -97,16 +113,21 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
         lag_dv <- names(baseline_df)[1]
         message(paste(
             'lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable:\n\n     ',
-            lag_dv))
+            lag_dv, '\n'))
     }
 
-    non_lag_dv_names <- names(baseline_df)[!(names(baseline_df) %in% lag_dv)]
-    non_lag_dv_names_shocked <- c(non_lag_dv_names, d_iv)
-
-    # Baseline cenario
     baseline_scenario <- df_repeat(baseline_df, n = t_extent)
     baseline_scenario$time__ <- 1:t_extent
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
+
+    if (!missing(lag_iv_2) & !missing(lag_iv_interaction_term))
+        baseline_scenario[,
+            lag_iv_interaction_term] <- baseline_scenario[, lag_iv] *
+                                            baseline_scenario[, lag_iv_2]
+
+    non_lag_dv_names <- names(baseline_scenario)[!(names(baseline_scenario) %in%
+                                                       c(lag_dv, 'time__'))]
+
     baseline_scenario$is_shocked <- FALSE
 
     # Create shock fitted values
@@ -114,8 +135,27 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     shocked$time__ <- 1:t_extent
     shocked[2, d_iv] <- iv_shock
     shocked[is.na(shocked)] <- 0
-    shocked[3:t_extent, lag_iv] <- shocked[1, lag_iv] + iv_shock
+    shocked[3:t_extent, lag_iv] <- shocked[2, lag_iv] + iv_shock
     shocked[2:t_extent, lag_dv] <- NA
+
+    if (!missing(lag_iv_interaction_term) & !missing(d_iv_interaction_term) &
+        !missing(lag_iv_2) & !missing(d_iv_2)) {
+        message('Creating shock interactions...')
+        if (missing(iv_2_shock)) iv_2_shock <- 0
+        shocked[, d_iv_2] <- 0
+        shocked[2, d_iv_2] <- iv_2_shock
+        shocked[, d_iv_interaction_term] <- 0
+        shocked[, d_iv_interaction_term] <- shocked[, d_iv] *
+            shocked[, d_iv_2]
+
+        shocked[3:t_extent, lag_iv_2] <- shocked[2, lag_iv_2] + iv_2_shock
+        shocked[, lag_iv_interaction_term] <- shocked[, lag_iv] *
+            shocked[,lag_iv_2]
+    }
+
+    non_lag_dv_names_shocked <- names(shocked)[!(names(shocked) %in%
+                                                     c(lag_dv, 'time__'))]
+
     shocked$is_shocked <- TRUE
 
     scenarios <- list(baseline = baseline_scenario,

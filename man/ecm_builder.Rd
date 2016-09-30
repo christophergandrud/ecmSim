@@ -4,7 +4,8 @@
 \alias{ecm_builder}
 \title{Create simulations for long-term effects from error correction models (ECM)}
 \usage{
-ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, t_extent = 5,
+ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, lag_iv_2, d_iv_2,
+  lag_iv_interaction_term, d_iv_interaction_term, iv_2_shock, t_extent = 5,
   nsim = 1000, ci = 0.95, slim = TRUE, mu, Sigma)
 }
 \arguments{
@@ -27,6 +28,23 @@ independent variable in \code{obj} that experiences a shock.}
 one period shock to \code{lag_dv}.}
 
 \item{iv_shock}{numeric shock to \code{iv}.}
+
+\item{lag_iv_2}{character string identifying variable name of the second
+lagged independent variable in an interaction with \code{lag_iv}, if
+applicable.}
+
+\item{d_iv_2}{character string identifying variable name of the second
+shocked independent variable in an interaction with \code{lag_iv}, if
+applicable.}
+
+\item{lag_iv_interaction_term}{character string identifying the interaction
+term for \code{lag_iv} * \code{lag_iv_2}, if applicable.}
+
+\item{d_iv_interaction_term}{character string identifying the interaction
+term for \code{d_iv} * \code{d_iv_2}, if applicable.}
+
+\item{iv_2_shock}{numeric shock to \code{iv_2}. If not specified, set to
+0.}
 
 \item{t_extent}{numeric specifying the time points from the shock to
 simulate the long-term effects of the shock for. The default is 5 time

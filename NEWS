@@ -1,0 +1,4 @@
+# version 0.1.0
+
+- First working version of `ecm_builder` including ability to look at
+interactions.
