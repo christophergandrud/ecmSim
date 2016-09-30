@@ -102,6 +102,7 @@ for (i in 2:length(lag_iv)) {
         d_dv[i] <- b0 + b1*lag_dv[i] + b2*lag_iv[i] + b3*d_iv[i] + eps[i]
     }
 }
+
 # Estimate error correction model
 m1 <- lm(d_dv ~ lag_dv + lag_iv + d_iv)
 

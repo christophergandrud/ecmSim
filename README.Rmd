@@ -18,10 +18,39 @@ Our estimation model could look like this (assuming we have already created
 the change and lag variables and they are each in their own vectors or equal
 length): 
 
+```{r include=FALSE}
+# Simulated data to estimate the model from
+iv <- rnorm(10)
+lag_iv <- c(NA, iv[-length(iv)])
+d_iv <-  iv - lag_iv
 
+b0 = 2
+b1 = -0.2
+b2 = 1.1
+b3 = 2.2
+starting_d_dv <- -4.1
+eps <- rnorm(iv, sd = 0.2)
 
+dv <- vector()
+d_dv <- vector()
+lag_dv <- vector()
+for (i in 2:length(lag_iv)) {
+    if (i == 2) {
+        dv_start <- b0 + b2*lag_iv[i] + b3*d_iv[i] + eps[i]
+                          lag_dv[3] <- dv_start + starting_d_dv
+    }
+    else if (i == 3) {
+        d_dv[i] <- b0 + b1*lag_dv[i] + b2*lag_iv[i] + b3*d_iv[i] + eps[i]
+    }
+    else if (i > 3) {
+        lag_dv[i] <- lag_dv[i-1] + d_dv[i-1]
+        d_dv[i] <- b0 + b1*lag_dv[i] + b2*lag_iv[i] + b3*d_iv[i] + eps[i]
+    }
+}
 
-```r
+```
+
+```{r}
 # Estimate error correction model
 m1 <- lm(d_dv ~ lag_dv + lag_iv + d_iv)
 ```
@@ -29,8 +58,7 @@ m1 <- lm(d_dv ~ lag_dv + lag_iv + d_iv)
 We then create a data frame of fitted values for the baseline scenario to 
 simulate.
 
-
-```r
+```{r}
 baseline_scen <- data.frame(lag_dv = mean(lag_dv, na.rm = TRUE),
                             lag_iv = mean(lag_iv, na.rm = TRUE))
 ```
@@ -38,38 +66,18 @@ baseline_scen <- data.frame(lag_dv = mean(lag_dv, na.rm = TRUE),
 We also specify the "shock" to `iv`, the effects of which we want to compare to
 the baseline. 
 
-
-```r
+```{r}
 iv_shock <- sd(d_iv, na.rm = TRUE)
 ```
 
 We now have all of the information we need to simulate the effects estimated in 
 the ECM over 20 periods:
 
-
-```r
+```{r}
 m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
                        iv_shock = sd(d_iv, na.rm = TRUE),
                        baseline_df = baseline_scen, t_extent = 20)
-```
 
-```
-## lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable:
-## 
-##       lag_dv
-```
-
-```r
 # Show a sample of the simmulation output
 head(m1_sims)
-```
-
-```
-##   time__    qi_min qi_median    qi_max is_shocked
-## 1      1  8.135323  8.177056  8.335014      FALSE
-## 2      2  9.258256  9.652599  9.995788      FALSE
-## 3      3 10.258438 10.857229 11.397112      FALSE
-## 4      4 11.020414 11.818322 12.556660      FALSE
-## 5      5 11.600914 12.581432 13.513218      FALSE
-## 6      6 12.043161 13.181285 14.302321      FALSE
 ```
