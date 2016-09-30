@@ -55,4 +55,48 @@ Note that if the model includes an intercept the corresponding column in
 \description{
 Create simulations for long-term effects from error correction models (ECM)
 }
+\examples{
+# Simulated data to estimate the model from
+iv <- rnorm(10)
+lag_iv <- c(NA, iv[-length(iv)])
+d_iv <-  iv - lag_iv
+
+b0 = 2
+b1 = -0.2
+b2 = 1.1
+b3 = 2.2
+starting_d_dv <- -4.1
+eps <- rnorm(iv, sd = 0.2)
+
+dv <- vector()
+d_dv <- vector()
+lag_dv <- vector()
+for (i in 2:length(lag_iv)) {
+    if (i == 2) {
+        dv_start <- b0 + b2*lag_iv[i] + b3*d_iv[i] + eps[i]
+                          lag_dv[3] <- dv_start + starting_d_dv
+    }
+    else if (i == 3) {
+        d_dv[i] <- b0 + b1*lag_dv[i] + b2*lag_iv[i] + b3*d_iv[i] + eps[i]
+    }
+    else if (i > 3) {
+        lag_dv[i] <- lag_dv[i-1] + d_dv[i-1]
+        d_dv[i] <- b0 + b1*lag_dv[i] + b2*lag_iv[i] + b3*d_iv[i] + eps[i]
+    }
+}
+# Estimate error correction model
+m1 <- lm(d_dv ~ lag_dv + lag_iv + d_iv)
+
+# Create baseline scenario
+baseline_scen <- data.frame(lag_dv = mean(lag_dv, na.rm = TRUE),
+                            lag_iv = mean(lag_iv, na.rm = TRUE))
+
+# Simulate effects of a 1 standard deviation shock to the IV over 20 time
+## periods
+m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
+                       iv_shock = sd(d_iv, na.rm = TRUE),
+                       baseline_df = baseline_scen, t_extent = 20)
+
+
+}
 
