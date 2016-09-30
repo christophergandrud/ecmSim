@@ -65,11 +65,34 @@ head(m1_sims)
 ```
 
 ```
-##   time__    qi_min qi_median    qi_max is_shocked
-## 1      1  8.135323  8.177056  8.335014      FALSE
-## 2      2  9.258256  9.652599  9.995788      FALSE
-## 3      3 10.258438 10.857229 11.397112      FALSE
-## 4      4 11.020414 11.818322 12.556660      FALSE
-## 5      5 11.600914 12.581432 13.513218      FALSE
-## 6      6 12.043161 13.181285 14.302321      FALSE
+##   time__   qi_min qi_median   qi_max is_shocked
+## 1      1 6.094381  6.116984 6.219926      FALSE
+## 2      2 6.780677  6.990080 7.212796      FALSE
+## 3      3 7.359268  7.673848 7.973042      FALSE
+## 4      4 7.782659  8.195578 8.567472      FALSE
+## 5      5 8.093274  8.596204 9.073168      FALSE
+## 6      6 8.321153  8.899521 9.477739      FALSE
 ```
+
+The simulated quantity of interest is the value of `dv` at each time point 
+(i.e. lagged `dv` + the change in `dv` from the previous period).
+
+We can plot the results (note, in the future there will be a `ecm_plot` function
+to simplify this process):
+
+
+```r
+ggplot(m1_sims, aes(time__, qi_median, group = is_shocked, 
+                    colour == is_shocked, fill = is_shocked)) +
+    geom_line(aes(color = is_shocked)) +
+    geom_ribbon(aes(ymin = qi_min, ymax = qi_max), alpha = 0.2) +
+    scale_y_continuous(limits = c(0, 25)) + 
+    xlab('\nSimulation Time') + ylab('Predicted dv\n') +
+    theme_bw()
+```
+
+![plot of chunk non-interactive-plot](figure/non-interactive-plot-1.png)
+
+
+
+
