@@ -6,7 +6,7 @@
 \usage{
 ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, lag_iv_2, d_iv_2,
   lag_iv_interaction_term, d_iv_interaction_term, iv_2_shock, t_extent = 5,
-  nsim = 1000, ci = 0.95, slim = TRUE, mu, Sigma)
+  nsim = 1000, ci = 0.95, slim = TRUE, qi_d_dv = TRUE, mu, Sigma)
 }
 \arguments{
 \item{obj}{a fitted model object from an ECM model estimated with
@@ -60,6 +60,9 @@ then the full interval (i.e. 100 percent) is assumed.}
 simulations in the central interval specified by \code{ci} for each fitted
 scenario or (if \code{TRUE}) just the minimum, median, and maxium values.
 See \code{\link{qi_slimmer}} for more details.}
+
+\item{qi_d_dv}{logical specifying if the quantity of interest should be the
+simulated change in the dependent variable or its level.}
 
 \item{mu}{an optional vector giving the means of the variables estimated
 from an ECM model. If \code{obj} is supplied then \code{mu} is ignored.}

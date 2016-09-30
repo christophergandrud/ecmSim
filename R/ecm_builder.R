@@ -37,6 +37,8 @@
 #' simulations in the central interval specified by \code{ci} for each fitted
 #' scenario or (if \code{TRUE}) just the minimum, median, and maxium values.
 #' See \code{\link{qi_slimmer}} for more details.
+#' @param qi_d_dv logical specifying if the quantity of interest should be the
+#' simulated change in the dependent variable or its level.
 #' @param mu an optional vector giving the means of the variables estimated
 #' from an ECM model. If \code{obj} is supplied then \code{mu} is ignored.
 #' @param Sigma an optional positive-definite symmetric matrix estimated
@@ -98,12 +100,17 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                         lag_iv_interaction_term, d_iv_interaction_term,
                         iv_2_shock,
                         t_extent = 5,
-                        nsim = 1000, ci = 0.95, slim = TRUE,
+                        nsim = 1000, ci = 0.95, slim = TRUE, qi_d_dv = TRUE,
                         mu, Sigma)
 {
     time__ <- NULL
 
-    ci <- ci_check(ci)
+    ci <- ecmSim:::ci_check(ci)
+
+    if (qi_d_dv)
+        message('Reminder: the returned quantity of interest is the predicted CHANGE in the dependent variable.\n')
+    else
+        message("Reminder: the returned quantity of interest is the predicted dependent variable's VALUE.\n")
 
     if (t_extent < 3) {
         message('t_extent must be 3 or more time points.\nForcing t_extent = 3.')
@@ -117,7 +124,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
             lag_dv, '\n'))
     }
 
-    baseline_scenario <- df_repeat(baseline_df, n = t_extent)
+    baseline_scenario <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     baseline_scenario$time__ <- 1:t_extent
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
 
@@ -132,7 +139,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     baseline_scenario$is_shocked <- FALSE
 
     # Create shock fitted values
-    shocked <- df_repeat(baseline_df, n = t_extent)
+    shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     shocked$time__ <- 1:t_extent
     shocked[2, d_iv] <- iv_shock
     shocked[is.na(shocked)] <- 0
@@ -156,7 +163,6 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
 
     non_lag_dv_names_shocked <- names(shocked)[!(names(shocked) %in%
                                                      c(lag_dv, 'time__'))]
-
     shocked$is_shocked <- TRUE
 
     scenarios <- list(baseline = baseline_scenario,
@@ -175,7 +181,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
         if (is_shocked) col_names = non_lag_dv_names_shocked
         else col_names = non_lag_dv_names
 
-        temp_scen <- drop_col(temp_scen, 'is_shocked')
+        temp_scen <- ecmSim:::drop_col(temp_scen, 'is_shocked')
 
         temp_sims <- data.frame()
         for (u in 1:nrow(temp_scen)) {
@@ -187,7 +193,8 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                                             ci = 1, verbose = FALSE)
                 one_scen_sims[, lag_dv] <- one_scen_sims[, lag_dv] +
                                             one_scen_sims[, 'qi_']
-                one_scen_sims <- drop_col(one_scen_sims, 'qi_')
+                if (!isTRUE(qi_d_dv)) one_scen_sims <- drop_col(one_scen_sims,
+                                                                'qi_')
                 one_scen_sims$time__ <- u
                 temp_sims <- rbind(temp_sims, one_scen_sims)
             }
@@ -197,31 +204,35 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                 names(lag_dv_sim_values) <- lag_dv
                 one_scen_x <- data.frame(one_scen[, col_names])
                 colnames(one_scen_x) <- col_names
-                temp_scen_updated <- expand_dfs(lag_dv_sim_values,
+                temp_scen_updated <- ecmSim:::expand_dfs(lag_dv_sim_values,
                                                          one_scen_x)
                 one_scen_sims <- param_sims[, names(temp_scen_updated)] *
-                    temp_scen_updated
-                temp_scen_updated[, lag_dv] <- temp_scen_updated[, lag_dv] +
-                                    (rowSums(one_scen_sims) +
-                                    param_sims[, 'intercept_'])
+                                    temp_scen_updated
+                qi_ <- (rowSums(one_scen_sims) + param_sims[, 'intercept_'])
+                temp_scen_updated[, lag_dv] <- temp_scen_updated[, lag_dv] + qi_
+                if (qi_d_dv) temp_scen_updated$qi_ <- qi_
                 temp_scen_updated$time__ <- u
                 temp_sims <- rbind(temp_sims, temp_scen_updated)
             }
         }
-        temp_sims <- temp_sims[, c(lag_dv, 'time__')]
+        if (qi_d_dv) temp_sims <- temp_sims[, c('qi_', lag_dv, 'time__')]
+        else temp_sims <- temp_sims[, c(lag_dv, 'time__')]
         temp_sims$is_shocked <- is_shocked
         temp_sims
     })
 
     sims <- data.frame(bind_rows(sims))
     sims$scenario_ <- interaction(sims[, c('time__', 'is_shocked')])
-    sims <- qi_central_interval(sims, scenario_var = 'is_shocked',
-                                qi_var = lag_dv, ci = ci)
+    if (qi_d_dv) qi_var_ <- 'qi_'
+    else qi_var_ <- lag_dv
+    sims <- ecmSim:::qi_central_interval(sims_scenarios = sims,
+                                         scenario_var = 'is_shocked',
+                                         qi_var = qi_var_, ci = ci)
     if (slim) {
-        sims <- qi_slimmer(sims, qi_var = lag_dv)
+        sims <- qi_slimmer(sims, qi_var = qi_var_)
         sims$is_shocked <- c(baseline_scenario$is_shocked, shocked$is_shocked)
     }
-    sims <- drop_col(sims, c('scenario_', lag_dv))
+    sims <- drop_col(sims, c('scenario_', qi_var_))
 
     return(sims)
 }

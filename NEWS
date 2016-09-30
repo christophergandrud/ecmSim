@@ -1,3 +1,9 @@
+# version 0.1.1
+
+- **Breaking changes**: with the `ecm_builder` argument `qi_d_dv`, allow the
+user to specify if they want the quantity of interest to be the simulated
+change in the dependent variable or its level.
+
 # version 0.1.0
 
 - First working version of `ecm_builder` including ability to look at
