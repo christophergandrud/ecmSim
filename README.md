@@ -5,7 +5,7 @@ ecmSim
 
 Early stage development version of a *possible* R package for simulating
 quantities of interest from Error Correction Models (ECM). This includes
-interactions.
+interactions [!INCOMPLETE!].
 
 Use the `ecm_builder` function to simulated the quantities of interest and the
 `ecm_plot` function (NOT COMPLETED to plot the results.
@@ -56,7 +56,7 @@ m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
 
 ```
 ## lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable:
-##
+## 
 ##       lag_dv
 ```
 
@@ -66,13 +66,13 @@ head(m1_sims)
 ```
 
 ```
-##   time__   qi_min qi_median   qi_max is_shocked
-## 1      1 4.253231  4.319776 4.553804      FALSE
-## 2      2 4.647514  5.189331 5.718962      FALSE
-## 3      3 5.135769  5.910315 6.793774      FALSE
-## 4      4 5.436260  6.450748 7.721647      FALSE
-## 5      5 5.638139  6.871405 8.522670      FALSE
-## 6      6 5.773766  7.192413 9.214185      FALSE
+##   time__   qi_min qi_median    qi_max is_shocked
+## 1      1 5.920969  5.984549  6.190640      FALSE
+## 2      2 6.433139  6.929805  7.417030      FALSE
+## 3      3 7.011382  7.723837  8.412762      FALSE
+## 4      4 7.422771  8.347282  9.325872      FALSE
+## 5      5 7.724513  8.836999 10.179571      FALSE
+## 6      6 7.945832  9.222496 10.957557      FALSE
 ```
 
 The simulated quantity of interest is the value of `dv` at each time point
