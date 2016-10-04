@@ -74,7 +74,7 @@ iv_shock <- sd(d_iv, na.rm = TRUE)
 We now have all of the information we need to simulate the effects estimated in
 the ECM over 20 periods:
 
-```{r}
+```{r, message=FALSE}
 m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
                        iv_shock = sd(d_iv, na.rm = TRUE),
                        baseline_df = baseline_scen, t_extent = 20)
@@ -83,8 +83,10 @@ m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
 head(m1_sims)
 ```
 
-The simulated quantity of interest is the value of `dv` at each time point
-(i.e. lagged `dv` + the change in `dv` from the previous period).
+The simulated quantity of interest is the change in the value of `dv`. We could
+alternatively supply `qi_d_dv = FALSE` to `ecm_builder` to return the 
+dependent variable at each time point (i.e. lagged `dv` + the change in `dv` 
+from the previous period).
 
 We can plot the results (note, in the future there will be a `ecm_plot` function
 to simplify this process):
@@ -94,8 +96,7 @@ ggplot(m1_sims, aes(time__, qi_median, group = is_shocked,
                     colour == is_shocked, fill = is_shocked)) +
     geom_line(aes(color = is_shocked)) +
     geom_ribbon(aes(ymin = qi_min, ymax = qi_max), alpha = 0.2) +
-    scale_y_continuous(limits = c(0, 25)) +
-    xlab('\nSimulation Time') + ylab('Predicted dv\n') +
+    xlab('\nSimulation Time') + ylab('Predicted dv Change\n') +
     theme_bw()
 ```
 

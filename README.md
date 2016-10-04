@@ -52,31 +52,25 @@ the ECM over 20 periods:
 m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
                        iv_shock = sd(d_iv, na.rm = TRUE),
                        baseline_df = baseline_scen, t_extent = 20)
-```
 
-```
-## lag_dv not supplied. Assuming first column of baseline_df is the lagged dependent variable:
-## 
-##       lag_dv
-```
-
-```r
 # Show a sample of the simmulation output
 head(m1_sims)
 ```
 
 ```
-##   time__   qi_min qi_median   qi_max is_shocked
-## 1      1 3.354857  3.460830 3.581232      FALSE
-## 2      2 4.183715  4.376470 4.602829      FALSE
-## 3      3 4.807383  5.096392 5.448344      FALSE
-## 4      4 5.270811  5.668590 6.161334      FALSE
-## 5      5 5.616830  6.115853 6.747906      FALSE
-## 6      6 5.889580  6.464041 7.282271      FALSE
+##         qi_ time__    qi_min qi_median    qi_max is_shocked
+## 1 0.4626562      1 0.3504964 0.4615431 0.5642003      FALSE
+## 2 0.4626562      2 0.3504964 0.4615431 0.5642003      FALSE
+## 3 0.3720959      3 0.2777564 0.3671506 0.4552084      FALSE
+## 4 0.2992618      4 0.2147838 0.2928120 0.3777342      FALSE
+## 5 0.2406843      5 0.1625244 0.2339039 0.3200171      FALSE
+## 6 0.1935728      6 0.1246516 0.1876731 0.2693561      FALSE
 ```
 
-The simulated quantity of interest is the value of `dv` at each time point
-(i.e. lagged `dv` + the change in `dv` from the previous period).
+The simulated quantity of interest is the change in the value of `dv`. We could
+alternatively supply `qi_d_dv = FALSE` to `ecm_builder` to return the 
+dependent variable at each time point (i.e. lagged `dv` + the change in `dv` 
+from the previous period).
 
 We can plot the results (note, in the future there will be a `ecm_plot` function
 to simplify this process):
@@ -87,8 +81,7 @@ ggplot(m1_sims, aes(time__, qi_median, group = is_shocked,
                     colour == is_shocked, fill = is_shocked)) +
     geom_line(aes(color = is_shocked)) +
     geom_ribbon(aes(ymin = qi_min, ymax = qi_max), alpha = 0.2) +
-    scale_y_continuous(limits = c(0, 25)) +
-    xlab('\nSimulation Time') + ylab('Predicted dv\n') +
+    xlab('\nSimulation Time') + ylab('Predicted dv Change\n') +
     theme_bw()
 ```
 
