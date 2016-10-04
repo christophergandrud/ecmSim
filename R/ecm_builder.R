@@ -20,10 +20,14 @@
 #' @param d_iv_2 character string identifying variable name of the second
 #' shocked independent variable in an interaction with \code{lag_iv}, if
 #' applicable.
-#' @param lag_iv_interaction_term character string identifying the interaction
+#' @param lag_iv_lag_iv2_interaction character string identifying the interaction
 #' term for \code{lag_iv} * \code{lag_iv_2}, if applicable.
-#' @param d_iv_interaction_term character string identifying the interaction
+#' @param d_iv_d_iv2_interaction character string identifying the interaction
 #' term for \code{d_iv} * \code{d_iv_2}, if applicable.
+#' @param lag_iv_d_iv2_interaction character string identifying the interaction
+#' term for \code{lag_iv} * \code{d_iv_2}, if applicable.
+#' @param d_iv_lag_iv2_interaction character string identifying the interaction
+#' term for \code{d_iv} * \code{lag_iv_2}, if applicable.
 #' @param iv_2_shock numeric shock to \code{iv_2}. If not specified, set to
 #' 0.
 #' @param shock_duration numeric specifying how many time periods over which
@@ -48,6 +52,10 @@
 #' variables. If \code{obj}  is supplied then \code{Sigma} is ignored.
 #' Note that if the model includes an intercept the corresponding column in
 #' \code{Sigma} must be called \code{intercept_}.
+#'
+#' @details If an interaction with the shocked variable is included, the
+#' function assumes a "general model" setup as discussed in Warner (2016).
+#'
 #'
 #' @examples
 #' # Simulated data to estimate the model from
@@ -99,7 +107,8 @@
 ecm_builder <- function(obj, baseline_df, lag_dv,
                         lag_iv, d_iv, iv_shock,
                         lag_iv_2, d_iv_2,
-                        lag_iv_interaction_term, d_iv_interaction_term,
+                        lag_iv_lag_iv2_interaction, d_iv_d_iv2_interaction,
+                        lag_iv_d_iv2_interaction, d_iv_lag_iv2_interaction,
                         iv_2_shock,
                         shock_duration,
                         t_extent = 5,
@@ -134,9 +143,9 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     baseline_scenario$time__ <- 1:t_extent
     baseline_scenario[, lag_dv][baseline_scenario$time__ > 1] <- NA
 
-    if (!missing(lag_iv_2) & !missing(lag_iv_interaction_term))
+    if (!missing(lag_iv_2) & !missing(lag_iv_lag_iv2_interaction))
         baseline_scenario[,
-            lag_iv_interaction_term] <- baseline_scenario[, lag_iv] *
+            lag_iv_lag_iv2_interaction] <- baseline_scenario[, lag_iv] *
                                             baseline_scenario[, lag_iv_2]
 
     non_lag_dv_names <- names(baseline_scenario)[!(names(baseline_scenario) %in%
@@ -147,7 +156,9 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     # Create shock fitted values
     shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     shocked$time__ <- 1:t_extent
+    if (missing(iv_shock)) iv_shock <- 0
     shocked[2:shock_duration, d_iv] <- iv_shock
+
     shocked[is.na(shocked)] <- 0
     if (shock_duration >= 3) {
         shock_period_post_start <- 3:shock_duration
@@ -161,27 +172,38 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
 
     shocked[2:t_extent, lag_dv] <- NA
 
-    if (!missing(lag_iv_interaction_term) & !missing(d_iv_interaction_term) &
-        !missing(lag_iv_2) & !missing(d_iv_2)) {
+    if (!missing(lag_iv_lag_iv2_interaction) &
+        !missing(d_iv_d_iv2_interaction) &
+        !missing(lag_iv_2) & !missing(d_iv_2) &
+        !missing(lag_iv_d_iv2_interaction) &
+        !missing(d_iv_lag_iv2_interaction))
+    {
         message('Creating shock interactions...')
         if (missing(iv_2_shock)) iv_2_shock <- 0
+        # First period no shock to second variable
         shocked[, d_iv_2] <- 0
+
+        # Second period+ shock
         shocked[2, d_iv_2] <- iv_2_shock
-        shocked[, d_iv_interaction_term] <- 0
-        shocked[, d_iv_interaction_term] <- shocked[, d_iv] *
+        shocked[, d_iv_d_iv2_interaction] <- shocked[, d_iv] *
             shocked[, d_iv_2]
 
         shocked[3:t_extent, lag_iv_2] <- shocked[2, lag_iv_2] + iv_2_shock
-        shocked[, lag_iv_interaction_term] <- shocked[, lag_iv] *
-            shocked[,lag_iv_2]
+        shocked[, lag_iv_lag_iv2_interaction] <- shocked[, lag_iv] *
+            shocked[, lag_iv_2]
+
+
+        shocked[, lag_iv_d_iv2_interaction] <- shocked[, lag_iv] *
+                shocked[, d_iv_2]
+        shocked[, d_iv_lag_iv2_interaction] <- shocked[, d_iv] *
+                shocked[, lag_iv_2]
     }
 
     non_lag_dv_names_shocked <- names(shocked)[!(names(shocked) %in%
                                                      c(lag_dv, 'time__'))]
     shocked$is_shocked <- TRUE
 
-    scenarios <- list(baseline = baseline_scenario,
-                      shocked = shocked)
+    scenarios <- list(baseline = baseline_scenario, shocked = shocked)
 
     # Simulate parameters
     if (!missing(obj))
@@ -208,9 +230,12 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                                             ci = 1, verbose = FALSE)
                 one_scen_sims[, lag_dv] <- one_scen_sims[, lag_dv] +
                                             one_scen_sims[, 'qi_']
+
                 if (!isTRUE(qi_d_dv)) one_scen_sims <- drop_col(one_scen_sims,
                                                                 'qi_')
+
                 one_scen_sims$time__ <- u
+                one_scen_sims$sim_id__ <- 1:nrow(one_scen_sims)
                 temp_sims <- rbind(temp_sims, one_scen_sims)
             }
             else if (u > 1) {
@@ -225,13 +250,17 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                                     temp_scen_updated
                 qi_ <- (rowSums(one_scen_sims) + param_sims[, 'intercept_'])
                 temp_scen_updated[, lag_dv] <- temp_scen_updated[, lag_dv] + qi_
+
                 if (qi_d_dv) temp_scen_updated$qi_ <- qi_
                 temp_scen_updated$time__ <- u
+                temp_scen_updated$sim_id__ <- 1:nrow(temp_scen_updated)
                 temp_sims <- rbind(temp_sims, temp_scen_updated)
             }
         }
-        if (qi_d_dv) temp_sims <- temp_sims[, c('qi_', lag_dv, 'time__')]
-        else temp_sims <- temp_sims[, c(lag_dv, 'time__')]
+
+        if (qi_d_dv) temp_sims <- temp_sims[, c('qi_', lag_dv, 'time__',
+                                            'sim_id__')]
+        else temp_sims <- temp_sims[, c(lag_dv, 'time__', 'sim_id__')]
         temp_sims$is_shocked <- is_shocked
         temp_sims
     })
@@ -246,8 +275,9 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     if (slim) {
         sims <- qi_slimmer(sims, qi_var = qi_var_)
         sims$is_shocked <- c(baseline_scenario$is_shocked, shocked$is_shocked)
+        sims <- drop_col(sims, c('scenario_', lag_dv, 'sim_id__'))
     }
-    sims <- drop_col(sims, c('scenario_', qi_var_))
+    else sims <- drop_col(sims, 'scenario_')
 
     return(sims)
 }

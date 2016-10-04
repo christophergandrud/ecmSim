@@ -5,7 +5,7 @@ ecmSim
 
 Early stage development version of a *possible* R package for simulating
 quantities of interest from Error Correction Models (ECM). This includes
-interactions.
+interactions [!INCOMPLETE!].
 
 Use the `ecm_builder` function to simulated the quantities of interest and the
 `ecm_plot` function (NOT COMPLETED to plot the results.
