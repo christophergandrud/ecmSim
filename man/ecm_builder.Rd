@@ -5,8 +5,9 @@
 \title{Create simulations for long-term effects from error correction models (ECM)}
 \usage{
 ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, lag_iv_2, d_iv_2,
-  lag_iv_interaction_term, d_iv_interaction_term, iv_2_shock, t_extent = 5,
-  nsim = 1000, ci = 0.95, slim = TRUE, qi_d_dv = TRUE, mu, Sigma)
+  lag_iv_interaction_term, d_iv_interaction_term, iv_2_shock, shock_duration,
+  t_extent = 5, nsim = 1000, ci = 0.95, slim = TRUE, qi_d_dv = TRUE,
+  mu, Sigma)
 }
 \arguments{
 \item{obj}{a fitted model object from an ECM model estimated with
@@ -45,6 +46,9 @@ term for \code{d_iv} * \code{d_iv_2}, if applicable.}
 
 \item{iv_2_shock}{numeric shock to \code{iv_2}. If not specified, set to
 0.}
+
+\item{shock_duration}{numeric specifying how many time periods over which
+the shock occurs.}
 
 \item{t_extent}{numeric specifying the time points from the shock to
 simulate the long-term effects of the shock for. The default is 5 time

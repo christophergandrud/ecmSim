@@ -26,6 +26,8 @@
 #' term for \code{d_iv} * \code{d_iv_2}, if applicable.
 #' @param iv_2_shock numeric shock to \code{iv_2}. If not specified, set to
 #' 0.
+#' @param shock_duration numeric specifying how many time periods over which
+#' the shock occurs.
 #' @param t_extent numeric specifying the time points from the shock to
 #' simulate the long-term effects of the shock for. The default is 5 time
 #' points.
@@ -99,6 +101,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
                         lag_iv_2, d_iv_2,
                         lag_iv_interaction_term, d_iv_interaction_term,
                         iv_2_shock,
+                        shock_duration,
                         t_extent = 5,
                         nsim = 1000, ci = 0.95, slim = TRUE, qi_d_dv = TRUE,
                         mu, Sigma)
@@ -116,6 +119,9 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
         message('t_extent must be 3 or more time points.\nForcing t_extent = 3.')
         t_extent = 3
     }
+
+    if (missing(shock_duration)) shock_duration <- 1
+    if (shock_duration > t_extent) shock_duration <- t_extent
 
     if (missing(lag_dv)) {
         lag_dv <- names(baseline_df)[1]
@@ -141,9 +147,18 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
     # Create shock fitted values
     shocked <- ecmSim:::df_repeat(baseline_df, n = t_extent)
     shocked$time__ <- 1:t_extent
-    shocked[2, d_iv] <- iv_shock
+    shocked[2:shock_duration, d_iv] <- iv_shock
     shocked[is.na(shocked)] <- 0
-    shocked[3:t_extent, lag_iv] <- shocked[2, lag_iv] + iv_shock
+    if (shock_duration >= 3) {
+        shock_period_post_start <- 3:shock_duration
+        for (i in shock_period_post_start) {
+            shocked[i, lag_iv] <- shocked[i-1, lag_iv] +
+                shocked[i, d_iv]
+        }
+        shocked[(max(shock_period_post_start)+1):t_extent, lag_iv] <- shocked[max(
+                                    shock_period_post_start), lag_iv]
+    }
+
     shocked[2:t_extent, lag_dv] <- NA
 
     if (!missing(lag_iv_interaction_term) & !missing(d_iv_interaction_term) &
