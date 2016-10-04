@@ -5,8 +5,9 @@
 \title{Create simulations for long-term effects from error correction models (ECM)}
 \usage{
 ecm_builder(obj, baseline_df, lag_dv, lag_iv, d_iv, iv_shock, lag_iv_2, d_iv_2,
-  lag_iv_interaction_term, d_iv_interaction_term, iv_2_shock, t_extent = 5,
-  nsim = 1000, ci = 0.95, slim = TRUE, mu, Sigma)
+  lag_iv_lag_iv2_interaction, d_iv_d_iv2_interaction, lag_iv_d_iv2_interaction,
+  d_iv_lag_iv2_interaction, iv_2_shock, t_extent = 5, nsim = 1000,
+  ci = 0.95, slim = TRUE, mu, Sigma)
 }
 \arguments{
 \item{obj}{a fitted model object from an ECM model estimated with
@@ -37,11 +38,17 @@ applicable.}
 shocked independent variable in an interaction with \code{lag_iv}, if
 applicable.}
 
-\item{lag_iv_interaction_term}{character string identifying the interaction
+\item{lag_iv_lag_iv2_interaction}{character string identifying the interaction
 term for \code{lag_iv} * \code{lag_iv_2}, if applicable.}
 
-\item{d_iv_interaction_term}{character string identifying the interaction
+\item{d_iv_d_iv2_interaction}{character string identifying the interaction
 term for \code{d_iv} * \code{d_iv_2}, if applicable.}
+
+\item{lag_iv_d_iv2_interaction}{character string identifying the interaction
+term for \code{lag_iv} * \code{d_iv_2}, if applicable.}
+
+\item{d_iv_lag_iv2_interaction}{character string identifying the interaction
+term for \code{d_iv} * \code{lag_iv_2}, if applicable.}
 
 \item{iv_2_shock}{numeric shock to \code{iv_2}. If not specified, set to
 0.}
@@ -72,6 +79,10 @@ Note that if the model includes an intercept the corresponding column in
 }
 \description{
 Create simulations for long-term effects from error correction models (ECM)
+}
+\details{
+If an interaction with the shocked variable is included, the
+function assumes a "general model" setup as discussed in Warner (2016).
 }
 \examples{
 # Simulated data to estimate the model from
