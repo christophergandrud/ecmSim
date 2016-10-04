@@ -66,13 +66,13 @@ head(m1_sims)
 ```
 
 ```
-##   time__   qi_min qi_median    qi_max is_shocked
-## 1      1 5.920969  5.984549  6.190640      FALSE
-## 2      2 6.433139  6.929805  7.417030      FALSE
-## 3      3 7.011382  7.723837  8.412762      FALSE
-## 4      4 7.422771  8.347282  9.325872      FALSE
-## 5      5 7.724513  8.836999 10.179571      FALSE
-## 6      6 7.945832  9.222496 10.957557      FALSE
+##   time__   qi_min qi_median   qi_max is_shocked
+## 1      1 3.354857  3.460830 3.581232      FALSE
+## 2      2 4.183715  4.376470 4.602829      FALSE
+## 3      3 4.807383  5.096392 5.448344      FALSE
+## 4      4 5.270811  5.668590 6.161334      FALSE
+## 5      5 5.616830  6.115853 6.747906      FALSE
+## 6      6 5.889580  6.464041 7.282271      FALSE
 ```
 
 The simulated quantity of interest is the value of `dv` at each time point
