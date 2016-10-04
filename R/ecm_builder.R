@@ -238,7 +238,7 @@ ecm_builder <- function(obj, baseline_df, lag_dv,
 
     sims <- data.frame(bind_rows(sims))
     sims$scenario_ <- interaction(sims[, c('time__', 'is_shocked')])
-    sims <- qi_central_interval(sims, scenario_var = 'is_shocked',
+    sims <- qi_central_interval(sims, scenario_var = 'scenario_',
                                 qi_var = lag_dv, ci = ci)
     if (slim) {
         sims <- qi_slimmer(sims, qi_var = lag_dv)
