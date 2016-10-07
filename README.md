@@ -49,6 +49,8 @@ the ECM over 20 periods:
 
 
 ```r
+library(ecmSim)
+
 m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
                        iv_shock = sd(d_iv, na.rm = TRUE),
                        baseline_df = baseline_scen, t_extent = 20)
@@ -58,13 +60,13 @@ head(m1_sims)
 ```
 
 ```
-##         qi_ time__    qi_min qi_median    qi_max is_shocked
-## 1 0.4626562      1 0.3504964 0.4615431 0.5642003      FALSE
-## 2 0.4626562      2 0.3504964 0.4615431 0.5642003      FALSE
-## 3 0.3720959      3 0.2777564 0.3671506 0.4552084      FALSE
-## 4 0.2992618      4 0.2147838 0.2928120 0.3777342      FALSE
-## 5 0.2406843      5 0.1625244 0.2339039 0.3200171      FALSE
-## 6 0.1935728      6 0.1246516 0.1876731 0.2693561      FALSE
+##        qi_ time__    qi_min qi_median   qi_max is_shocked
+## 1 1.714924      1 1.4201657 1.6273636 1.825654      FALSE
+## 2 1.714924      2 1.4201657 1.6273636 1.825654      FALSE
+## 3 1.466063      3 1.1353166 1.3414862 1.550681      FALSE
+## 4 1.253315      4 0.8708672 1.1078537 1.380757      FALSE
+## 5 1.071441      5 0.6591518 0.9163724 1.233472      FALSE
+## 6 0.915959      6 0.4974704 0.7549775 1.116688      FALSE
 ```
 
 The simulated quantity of interest is the change in the value of `dv`. We could
@@ -77,6 +79,8 @@ to simplify this process):
 
 
 ```r
+library(ggplot2)
+
 ggplot(m1_sims, aes(time__, qi_median, group = is_shocked,
                     colour == is_shocked, fill = is_shocked)) +
     geom_line(aes(color = is_shocked)) +
