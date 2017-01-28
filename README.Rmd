@@ -81,7 +81,7 @@ m1_sims <- ecm_builder(obj = m1, lag_iv = 'lag_iv', d_iv = 'd_iv',
                        iv_shock = sd(d_iv, na.rm = TRUE),
                        baseline_df = baseline_scen, t_extent = 20)
 
-# Show a sample of the simmulation output
+# Show a sample of the simulation output
 head(m1_sims)
 ```
 
